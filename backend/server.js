@@ -25,6 +25,10 @@ const reportSchema = new mongoose.Schema({
     accessibility: String,
     name: String,
     phone: String,
+    status: {
+        type: String,
+        default: 'Pending'
+    },
     image: {
         data: Buffer,         // Store binary image data
         contentType: String   // Store MIME type like "image/jpeg"
@@ -77,10 +81,25 @@ app.post("/api/reports", upload.single("image"), async (req, res) => {
 });
 
 // Get all reports
-app.get("/api/reports", async (req, res) => {
-    const reports = await Report.find();
-    res.json(reports);
+app.get('/api/reports', async (req, res) => {
+    try {
+        const reports = await Report.find({});
+        const reportsWithImages = reports.map(report => {
+            if (report.image && report.image.data) {
+                const base64 = report.image.data.toString('base64');
+                return {
+                    ...report.toObject(),
+                    image: `data:${report.image.contentType};base64,${base64}`
+                };
+            }
+            return report.toObject();
+        });
+        res.json(reportsWithImages);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
+
 
 // Delete one report (Admin only)
 app.delete("/api/reports/:id", async (req, res) => {
@@ -98,16 +117,16 @@ app.delete("/api/reports/:id", async (req, res) => {
 
 // Delete all reports (Admin only)
 app.delete('/api/reports', async (req, res) => {
-  try {
-    const { password } = req.query;
-    if (password !== '12341234') {
-      return res.status(403).json({ error: 'Unauthorized' });
+    try {
+        const { password } = req.query;
+        if (password !== '12341234') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        await Report.deleteMany({});
+        res.json({ message: 'All reports deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete reports' });
     }
-    await Report.deleteMany({});
-    res.json({ message: 'All reports deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete reports' });
-  }
 });
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

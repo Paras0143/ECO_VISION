@@ -116,7 +116,7 @@ const Home = () => {
   const fetchReports = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('http://localhost:3001/api/reports')
+      const response = await fetch('http://localhost:5000/api/reports')
       if (response.ok) {
         const data = await response.json()
         setReports(data)
@@ -193,31 +193,6 @@ const Home = () => {
   const handleClearReports = () => {
     setShowPasswordModal(true)
   }
-
-  // const handlePasswordSubmit = async () => {
-  //   if (password === '12341234') {
-  //     setShowPasswordModal(false)
-  //     setPassword('')
-  //     setPasswordError('')
-  //     // Immediately clear reports
-  //     try {
-  //       const response = await fetch('http://localhost:5000/api/reports/', {
-  //         method: 'DELETE'
-  //       })
-  //       if (response.ok) {
-  //         setReports([])
-  //         setTotalReports(0)
-  //         setReportStats({ garbage: 0, animalDeath: 0, animalAdopt: 0, other: 0 })
-  //       } else {
-  //         throw new Error('Failed to clear reports')
-  //       }
-  //     } catch (error) {
-  //       console.error('Error clearing reports:', error)
-  //     }
-  //   } else {
-  //     setPasswordError('Incorrect password')
-  //   }
-  // }
 
   const handlePasswordSubmit = async () => {
     if (password === '12341234') {
@@ -371,8 +346,8 @@ const Home = () => {
                   key={filter.key}
                   onClick={() => setCurrentTypeFilter(filter.key)}
                   className={`px-4 md:px-6 py-2 md:py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ${currentTypeFilter === filter.key
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
-                      : 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700'
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
+                    : 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700'
                     }`}
                 >
                   {filter.icon && <FontAwesomeIcon icon={filter.icon} className="mr-2" />}
@@ -451,7 +426,7 @@ const Home = () => {
                 const cardType = typeCardMap[report.type] || 'border-gray-300 shadow-gray-100/40';
                 return (
                   <div
-                    key={report.id}
+                    key={report._id}
                     className={`relative bg-white/90 backdrop-blur-md rounded-2xl border-2 p-4 shadow-xl hover:shadow-2xl transition-all duration-300 group ${cardType} animate-slide-up card-hover`}
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
@@ -461,7 +436,7 @@ const Home = () => {
                     </div>
                     {/* Type Badge */}
                     <div className="mb-2 flex flex-col items-start gap-1">
-                      {getTypeBadge(report.type)}
+                      {getTypeBadge(report.reportType)}
                     </div>
                     <img
                       src={report.image}
@@ -475,7 +450,7 @@ const Home = () => {
                       {report.status}
                     </div>
                     <div className="text-gray-500 text-xs mt-1">
-                      {new Date(report.timestamp || report.date).toLocaleDateString()}
+                      {new Date(report.createdAt || report.date).toLocaleDateString()}
                     </div>
                   </div>
                 )
