@@ -75,7 +75,7 @@ const Report = () => {
           const { latitude, longitude } = position.coords
           setMapPosition([latitude, longitude])
           setMarkerPosition([latitude, longitude])
-          
+
           // Reverse geocode to get location name
           try {
             const locationName = await reverseGeocode(latitude, longitude)
@@ -157,7 +157,7 @@ const Report = () => {
       }
 
       setFormData(prev => ({ ...prev, image: file }))
-      
+
       // Create preview
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -202,50 +202,57 @@ const Report = () => {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId)
     if (element) {
-      element.scrollIntoView({ 
+      element.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       })
     }
   }
 
+  async function submitReport(report) {
+    const formData = new FormData();
+
+    // Append text fields
+    formData.append('location', report.location)
+    formData.append('latitude', report.latitude)
+    formData.append('longitude', report.longitude)
+    formData.append('report-type', report.reportType)
+    formData.append('description', report.description)
+    formData.append('size', report.size)
+    formData.append('accessibility', report.accessibility)
+    formData.append('name', report.name)
+    formData.append('phone', report.phone)
+    formData.append('image', report.image)
+
+
+    const res = await fetch("http://localhost:5000/api/reports", {
+      method: "POST",
+      body: formData // No Content-Type here!
+    });
+
+    return res.json();
+  }
+
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validateForm()) {
-      return
-    }
+    //   if (!validateForm()) {
+    //     return
+    //   }
 
-    setIsSubmitting(true)
+    //   setIsSubmitting(true)
 
     try {
-      const submitFormData = new FormData()
-      submitFormData.append('location', formData.location)
-      submitFormData.append('latitude', formData.latitude)
-      submitFormData.append('longitude', formData.longitude)
-      submitFormData.append('report-type', formData.reportType)
-      submitFormData.append('description', formData.description)
-      submitFormData.append('size', formData.size)
-      submitFormData.append('accessibility', formData.accessibility)
-      submitFormData.append('name', formData.name)
-      submitFormData.append('phone', formData.phone)
-      submitFormData.append('image', formData.image)
-
-      const response = await fetch('http://localhost:3001/api/report', {
-        method: 'POST',
-        body: submitFormData
-      })
-
-      const result = await response.json()
-
-      if (response.ok && result.success) {
+      const result = await submitReport(formData);
+      // alert("Report saved: " + result.message);
+      if (result.success) {
         setModalContent({
           type: 'success',
           title: 'Report Submitted Successfully!',
           message: 'Your report has been received and will be processed within 24-48 hours.'
         })
         setShowModal(true)
-        
+
         // Reset form
         setFormData({
           location: '',
@@ -277,7 +284,78 @@ const Report = () => {
     } finally {
       setIsSubmitting(false)
     }
-  }
+  };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault()
+
+  //   if (!validateForm()) {
+  //     return
+  //   }
+
+  //   setIsSubmitting(true)
+
+  //   try {
+  //     const submitFormData = new FormData()
+  //     submitFormData.append('location', formData.location)
+  //     submitFormData.append('latitude', formData.latitude)
+  //     submitFormData.append('longitude', formData.longitude)
+  //     submitFormData.append('report-type', formData.reportType)
+  //     submitFormData.append('description', formData.description)
+  //     submitFormData.append('size', formData.size)
+  //     submitFormData.append('accessibility', formData.accessibility)
+  //     submitFormData.append('name', formData.name)
+  //     submitFormData.append('phone', formData.phone)
+  //     submitFormData.append('image', formData.image)
+
+  //     const response = await fetch('http://localhost:3001/api/report', {
+  //       method: 'POST',
+  //       body: submitFormData
+  //     })
+
+  //     const result = await response.json()
+
+  //     if (response.ok && result.success) {
+  //       setModalContent({
+  //         type: 'success',
+  //         title: 'Report Submitted Successfully!',
+  //         message: 'Your report has been received and will be processed within 24-48 hours.'
+  //       })
+  //       setShowModal(true)
+
+  //       // Reset form
+  //       setFormData({
+  //         location: '',
+  //         latitude: '',
+  //         longitude: '',
+  //         reportType: '',
+  //         description: '',
+  //         size: '',
+  //         accessibility: '',
+  //         name: '',
+  //         phone: '',
+  //         image: null
+  //       })
+  //       setImagePreview(null)
+  //       setMarkerPosition(null)
+  //       if (fileInputRef.current) {
+  //         fileInputRef.current.value = ''
+  //       }
+  //       // Redirect after a short delay
+  //       setTimeout(() => {
+  //         setShowModal(false)
+  //         navigate('/#dashboard-section')
+  //       }, 2000)
+  //     } else {
+  //       showError(result.error || 'Failed to submit report.')
+  //     }
+  //   } catch (error) {
+  //     showError('Failed to submit report. Please try again.')
+  //   } finally {
+  //     setIsSubmitting(false)
+  //   }
+  // }
+
 
   const closeModal = () => {
     setShowModal(false)
@@ -323,9 +401,9 @@ const Report = () => {
                   Location <span className="text-red-500">*</span>
                 </label>
                 <div className="h-56 md:h-72 lg:h-80 rounded-2xl overflow-hidden border-4 border-emerald-200 shadow-lg mb-4 relative group">
-                  <MapContainer 
-                    center={mapPosition} 
-                    zoom={13} 
+                  <MapContainer
+                    center={mapPosition}
+                    zoom={13}
                     className="w-full h-full"
                     key={mapPosition.toString()}
                   >
@@ -524,7 +602,7 @@ const Report = () => {
                   className="hidden"
                 />
                 {!imagePreview ? (
-                  <div 
+                  <div
                     className="cursor-pointer flex flex-col items-center justify-center gap-2"
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -545,9 +623,9 @@ const Report = () => {
                   </div>
                 ) : (
                   <div className="mt-4 md:mt-8 relative inline-block">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
                       className="max-w-full max-h-64 mx-auto rounded-3xl shadow-2xl border-4 border-purple-200"
                     />
                     <button

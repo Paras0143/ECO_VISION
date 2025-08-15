@@ -38,6 +38,7 @@ A modern, responsive React application for reporting and managing waste/environm
 3. **Access the application:**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
+   - New Backend API : http://localhost:5000
 
 ### Individual Services
 
@@ -49,6 +50,10 @@ npm run dev
 
 # Start only the backend server
 npm run server
+
+# Start new Backend Server
+cd backend
+npm run dev
 ```
 
 ## 🏗️ Project Structure
@@ -90,7 +95,7 @@ The app is pre-configured with Firebase. To use your own Firebase project:
 
 1. Create a Firebase project at https://firebase.google.com/
 2. Enable Authentication with Email/Password and Google providers
-3. Update the Firebase config in `src/context/AuthContext.jsx`
+3. Update the Firebase config in `src/context/AuthContext.jsx` now shifted to env
 
 ### Backend Configuration
 
@@ -193,6 +198,7 @@ If you encounter any issues:
 2. Verify that both frontend (3000) and backend (3001) servers are running
 3. Ensure all dependencies are installed with `npm install`
 4. Check that Firebase configuration is correct
+5. Run `cd Backend` and then run `npm install` for new backend.
 
 ## 🔗 Original Project
 
