@@ -2,14 +2,18 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import multer from "multer";
+import dotenv from "dotenv";
 
 const app = express();
 const PORT = 5000;
 
 // MongoDB connection
-mongoose.connect("mongodb://127.0.0.1:27017/reportsDB", {
+dotenv.config({ path: "../.env" }); // load .env file
+
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    dbName:"reportsDB"
 })
     .then(() => console.log("✅ MongoDB connected"))
     .catch(err => console.error("❌ MongoDB error:", err));
