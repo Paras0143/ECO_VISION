@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useAuth } from "../context/AuthContext"
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import { useNotification } from '../context/NotificationContext'
 import Header from '../components/Header'
+import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faFlag,
@@ -45,6 +47,7 @@ const MapClickHandler = ({ onLocationSelect }) => {
 }
 
 const Report = () => {
+  const { user } = useAuth();
   const { showSuccess, showError } = useNotification()
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -56,9 +59,10 @@ const Report = () => {
     size: '',
     accessibility: '',
     name: '',
-    phone: '',
-    image: null
+    phone: ''
   })
+
+  const [image, setImage] = useState(null);
   const [mapPosition, setMapPosition] = useState([28.6139, 77.2090]) // Default: Delhi
   const [markerPosition, setMarkerPosition] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -209,81 +213,110 @@ const Report = () => {
     }
   }
 
-  async function submitReport(report) {
-    const formData = new FormData();
+  // async function submitReport(report) {
+  //   const formData = new FormData();
 
-    // Append text fields
-    formData.append('location', report.location)
-    formData.append('latitude', report.latitude)
-    formData.append('longitude', report.longitude)
-    formData.append('reportType', report.reportType)
-    formData.append('description', report.description)
-    formData.append('size', report.size)
-    formData.append('accessibility', report.accessibility)
-    formData.append('name', report.name)
-    formData.append('phone', report.phone)
-    formData.append('image', report.image)
+  //   // Append text fields
+  //   formData.append('location', report.location)
+  //   formData.append('latitude', report.latitude)
+  //   formData.append('longitude', report.longitude)
+  //   formData.append('reportType', report.reportType)
+  //   formData.append('description', report.description)
+  //   formData.append('size', report.size)
+  //   formData.append('accessibility', report.accessibility)
+  //   formData.append('name', report.name)
+  //   formData.append('phone', report.phone)
+  //   formData.append('image', report.image)
 
+
+  //   const res = await fetch("http://localhost:5000/api/reports", {
+  //     method: "POST",
+  //     body: formData // No Content-Type here!
+  //   });
+
+  //   return res.json();
+  // }
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validateForm()) {
+    return;
+  }
+  if (!user) {
+    // Save form before redirect
+    localStorage.setItem("reportForm", JSON.stringify(formData));
+    navigate("/signin");
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    // 🔑 get fresh Firebase ID token
+    const idToken = await user.getIdToken();
+
+    const formPayload = new FormData();
+    for (const key in formData) {
+      if (formData[key]) {
+        formPayload.append(key, formData[key]);
+      }
+    }
 
     const res = await fetch("http://localhost:5000/api/reports", {
       method: "POST",
-      body: formData // No Content-Type here!
+      headers: {
+        Authorization: `Bearer ${idToken}`, // ✅ only this header
+      },
+      body: formPayload,
     });
 
-    return res.json();
-  }
+    const result = await res.json();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (result.success) {
+      setModalContent({
+        type: "success",
+        title: "Report Submitted Successfully!",
+        message:
+          "Your report has been received and will be processed within 24-48 hours.",
+      });
+      setShowModal(true);
 
-      if (!validateForm()) {
-        return
+      // Reset form
+      setFormData({
+        location: "",
+        latitude: "",
+        longitude: "",
+        reportType: "",
+        description: "",
+        size: "",
+        accessibility: "",
+        name: "",
+        phone: "",
+        image: null,
+      });
+      setImagePreview(null);
+      setMarkerPosition(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
 
-      setIsSubmitting(true)
-
-    try {
-      const result = await submitReport(formData);
-      if (result.success) {
-        setModalContent({
-          type: 'success',
-          title: 'Report Submitted Successfully!',
-          message: 'Your report has been received and will be processed within 24-48 hours.'
-        })
-        setShowModal(true)
-
-        // Reset form
-        setFormData({
-          location: '',
-          latitude: '',
-          longitude: '',
-          reportType: '',
-          description: '',
-          size: '',
-          accessibility: '',
-          name: '',
-          phone: '',
-          image: null
-        })
-        setImagePreview(null)
-        setMarkerPosition(null)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ''
-        }
-        // Redirect after a short delay
-        setTimeout(() => {
-          setShowModal(false)
-          navigate('/#dashboard-section')
-        }, 2000)
-      } else {
-        showError(result.error || 'Failed to submit report.')
-      }
-    } catch (error) {
-      showError('Failed to submit report. Please try again.')
-    } finally {
-      setIsSubmitting(false)
+      // Redirect after delay
+      setTimeout(() => {
+        setShowModal(false);
+        navigate("/#dashboard-section");
+      }, 2000);
+    } else {
+      showError(result.error || "Failed to submit report.");
     }
-  };
+  } catch (error) {
+    console.error("Submit error:", error);
+    showError("Failed to submit report. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const closeModal = () => {
     setShowModal(false)

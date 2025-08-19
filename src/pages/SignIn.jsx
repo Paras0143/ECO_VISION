@@ -15,6 +15,7 @@ import {
   faEyeSlash,
   faSpinner
 } from '@fortawesome/free-solid-svg-icons'
+import AuthStatus from '../components/AuthStatus' // Import the new component
 
 const SignIn = () => {
   const { signIn, signInWithGoogle } = useAuth()
@@ -107,29 +108,8 @@ const SignIn = () => {
               <span className="text-gray-600 text-sm font-semibold">Sign In</span>
             </div>
           </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              to="/"
-              className="font-semibold text-lg text-gray-800 hover:underline underline-offset-8 decoration-2 transition"
-            >
-              <FontAwesomeIcon icon={faHome} className="mr-2" />
-              Home
-            </Link>
-            <Link
-              to="/report"
-              className="font-semibold text-lg text-gray-800 hover:underline underline-offset-8 decoration-2 transition"
-            >
-              <FontAwesomeIcon icon={faFlag} className="mr-2" />
-              Report
-            </Link>
-            <Link
-              to="/signup"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300 shadow-lg hover:shadow-xl"
-            >
-              <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-              Sign Up
-            </Link>
-          </nav>
+          {/* Replaced the old nav with the new component */}
+          <AuthStatus />
         </div>
       </header>
 

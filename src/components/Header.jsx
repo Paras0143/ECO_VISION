@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faTimes, faLeaf } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faTimes, faLeaf, faHome, faFlag } from '@fortawesome/free-solid-svg-icons'
+import { useAuth } from '../context/AuthContext'
+import AuthStatus from './AuthStatus'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const location = useLocation()
+  const { user, loading } = useAuth() // Use the auth context here
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,10 +22,8 @@ const Header = () => {
   const isActive = (path) => location.pathname === path
 
   const navItems = [
-    { path: '/', label: 'Home' },
-    { path: '/report', label: 'Report Issue' },
-    { path: '/signin', label: 'Sign In' },
-    { path: '/signup', label: 'Sign Up' }
+    { path: '/', label: 'Home', icon: faHome },
+    { path: '/report', label: 'Report Issue', icon: faFlag }
   ]
 
   return (
@@ -73,6 +74,23 @@ const Header = () => {
                 <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-300 group-hover:w-full"></div>
               </Link>
             ))}
+            {/* Conditionally render AuthStatus or Sign In/Sign Up links */}
+            {!loading && (user ? <AuthStatus /> : (
+              <>
+                <Link
+                  to="/signin"
+                  className="relative px-4 py-2 font-semibold rounded-xl transition-all duration-300 hover:scale-105 group text-gray-700 hover:text-emerald-600"
+                >
+                  <span className="relative z-10">Sign In</span>
+                </Link>
+                <Link
+                  to="/signup"
+                  className="relative px-4 py-2 font-semibold rounded-xl transition-all duration-300 hover:scale-105 group text-gray-700 hover:text-emerald-600"
+                >
+                  <span className="relative z-10">Sign Up</span>
+                </Link>
+              </>
+            ))}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -109,6 +127,29 @@ const Header = () => {
               >
                 {item.label}
               </Link>
+            ))}
+            {/* Conditionally render AuthStatus or Sign In/Sign Up links for mobile */}
+            {!loading && (user ? <AuthStatus /> : (
+              <>
+                <Link
+                  to="/signin"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    isActive('/signin') ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'
+                  }`}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                    isActive('/signup') ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'
+                  }`}
+                >
+                  Sign Up
+                </Link>
+              </>
             ))}
           </nav>
         </div>

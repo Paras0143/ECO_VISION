@@ -2,17 +2,21 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import multer from "multer";
+import { verifyToken } from "../backend/firebase.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // MongoDB connection
-mongoose.connect("mongodb://127.0.0.1:27017/reportsDB", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch(err => console.error("❌ MongoDB error:", err));
+.then(() => console.log("✅ Connected to MongoDB Atlas"))
+.catch((err) => console.error("❌ Error connecting to MongoDB:", err));
 
 // Mongoose schema
 const reportSchema = new mongoose.Schema({
@@ -37,48 +41,58 @@ const reportSchema = new mongoose.Schema({
 const Report = mongoose.model("Report", reportSchema);
 
 // Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // frontend origin
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"], // need Authorization for Firebase token
+  })
+);
+
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
+
+
 
 // Multer setup (store file in memory to save in MongoDB)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // API route
-app.post("/api/reports", upload.single("image"), async (req, res) => {
-    try {
-        const { location,
-            latitude,
-            longitude,
-            reportType,
-            description,
-            size,
-            accessibility,
-            name,
-            phone } = req.body;
+app.post("/api/reports", verifyToken, upload.single("image"), async (req, res) => {
+  try {
+   
+    
+    const { location, latitude, longitude, reportType, description, size, accessibility, name, phone } = req.body;
 
-        const newReport = new Report({
-            location,
-            latitude,
-            longitude,
-            reportType,
-            description,
-            size,
-            accessibility,
-            name,
-            phone,
-            image: req.file ? {
-                data: req.file.buffer,
-                contentType: req.file.mimetype
-            } : null
-        });
+    const newReport = new Report({
+      location,
+      latitude,
+      longitude,
+      reportType,
+      description,
+      size,
+      accessibility,
+      name,
+      phone,
+      submittedBy: req.user ? req.user.uid : null,   // track Firebase user
+      image: req.file ? {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      } : null
+    });
 
-        await newReport.save();
-        res.json({ success: true, message: "Report saved successfully" });
-    } catch (err) {
-        console.error("Error saving report:", err);
-        res.status(500).json({ success: false, message: "Error saving report" });
-    }
+    await newReport.save();
+    res.json({ success: true, message: "Report saved successfully" });
+  } catch (err) {
+    console.error("Error saving report:", err);
+    res.status(500).json({ success: false, message: "Error saving report" });
+  }
 });
+
 
 // Get all reports
 app.get('/api/reports', async (req, res) => {

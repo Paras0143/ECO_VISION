@@ -331,47 +331,7 @@ const Home = () => {
 
 
 
-      {/* Filter Bar */}
-      <section className="max-w-7xl mx-auto px-6 mt-16 mb-8">
-        <div className="glass-card rounded-3xl p-6 md:p-8 shadow-2xl border border-white/30">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex flex-wrap gap-3 items-center">
-              {[
-                { key: 'all', label: 'All', icon: null },
-                { key: 'garbage', label: 'Garbage', icon: faTrash },
-                { key: 'animal_death', label: 'Animal Death', icon: faSkullCrossbones },
-                { key: 'animal_adopt', label: 'Animal Adopt', icon: faPaw }
-              ].map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setCurrentTypeFilter(filter.key)}
-                  className={`px-4 md:px-6 py-2 md:py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ${currentTypeFilter === filter.key
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
-                    : 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700'
-                    }`}
-                >
-                  {filter.icon && <FontAwesomeIcon icon={filter.icon} className="mr-2" />}
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-4 md:gap-6 items-center text-sm">
-              <span className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-white/80 rounded-xl shadow-md">
-                <FontAwesomeIcon icon={faTrash} className="text-emerald-500" />
-                Garbage Cleaning
-              </span>
-              <span className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-white/80 rounded-xl shadow-md">
-                <FontAwesomeIcon icon={faSkullCrossbones} className="text-red-500" />
-                Animal Death
-              </span>
-              <span className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-white/80 rounded-xl shadow-md">
-                <FontAwesomeIcon icon={faPaw} className="text-blue-500" />
-                Animal Adoption/Care
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
+     
 
       {/* Dashboard Section */}
       <main ref={dashboardRef} className="max-w-7xl mx-auto px-6 mt-16 mb-16" id="dashboard-section">
