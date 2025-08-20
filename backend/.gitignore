@@ -16,3 +16,4 @@ serviceAccountKey.json # Highly recommended to ignore this file as it contains s
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+serviceAccountKey.json
