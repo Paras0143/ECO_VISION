@@ -225,7 +225,7 @@ const Report = () => {
     formData.append('image', report.image)
 
 
-    const res = await fetch("http://localhost:5000/api/reports", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reports`  || 'http://localhost:5000/api/reports', {
       method: "POST",
       body: formData // No Content-Type here!
     });

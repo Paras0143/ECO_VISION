@@ -213,29 +213,29 @@ const Report = () => {
     }
   }
 
-  // async function submitReport(report) {
-  //   const formData = new FormData();
+  async function submitReport(report) {
+    const formData = new FormData();
 
-  //   // Append text fields
-  //   formData.append('location', report.location)
-  //   formData.append('latitude', report.latitude)
-  //   formData.append('longitude', report.longitude)
-  //   formData.append('reportType', report.reportType)
-  //   formData.append('description', report.description)
-  //   formData.append('size', report.size)
-  //   formData.append('accessibility', report.accessibility)
-  //   formData.append('name', report.name)
-  //   formData.append('phone', report.phone)
-  //   formData.append('image', report.image)
+    // Append text fields
+    formData.append('location', report.location)
+    formData.append('latitude', report.latitude)
+    formData.append('longitude', report.longitude)
+    formData.append('reportType', report.reportType)
+    formData.append('description', report.description)
+    formData.append('size', report.size)
+    formData.append('accessibility', report.accessibility)
+    formData.append('name', report.name)
+    formData.append('phone', report.phone)
+    formData.append('image', report.image)
 
 
-  //   const res = await fetch("http://localhost:5000/api/reports", {
-  //     method: "POST",
-  //     body: formData // No Content-Type here!
-  //   });
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reports` || 'http://localhost:5000/api/reports', {
+      method: "POST",
+      body: formData // No Content-Type here!
+    });
 
-  //   return res.json();
-  // }
+    return res.json();
+  }
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -263,7 +263,8 @@ const Report = () => {
       }
     }
 
-    const res = await fetch("http://localhost:5000/api/reports", {
+
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reports` || 'http://localhost:5000/api/reports', {
       method: "POST",
       headers: {
         Authorization: `Bearer ${idToken}`, // ✅ only this header
@@ -272,6 +273,7 @@ const Report = () => {
     });
 
     const result = await res.json();
+    console.log(result)
 
     if (result.success) {
       setModalContent({

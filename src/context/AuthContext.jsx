@@ -13,13 +13,13 @@ import {
 
 // Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyAj0gR2Qe_7EeDO_C7IAY1faKlilVi_KnM",
-  authDomain: "ecovision-waste-management.firebaseapp.com",
-  projectId: "ecovision-waste-management",
-  storageBucket: "ecovision-waste-management.firebasestorage.app",
-  messagingSenderId: "734580869994",
-  appId: "1:734580869994:web:dd7dcc583f2e26d5563313"
-};
+  apiKey: import.meta.env.VITE_apiKey,
+  authDomain: import.meta.env.VITE_authDomain,
+  projectId: import.meta.env.VITE_projectId,
+  storageBucket: import.meta.env.VITE_storageBucket,
+  messagingSenderId: import.meta.env.VITE_messagingSenderId,
+  appId: import.meta.env.VITE_appId
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
