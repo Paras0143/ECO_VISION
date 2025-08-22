@@ -15,7 +15,7 @@ try {
       serviceAccount = JSON.parse(decoded);
     }
   } else {
-    serviceAccount = JSON.parse(fs.readFileSync("./serviceAccountKey.json", "utf-8"));
+    serviceAccount = JSON.parse(fs.readFileSync("./serviceAccountKey.js", "utf-8"));
   }
 } catch (err) {
   // Defer initialization error until first token verification attempt
