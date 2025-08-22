@@ -1,16 +1,32 @@
 import admin from "firebase-admin";
-// import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
-
 import fs from "fs";
+import dotenv from "dotenv";
 
-const serviceAccount = JSON.parse(
-  fs.readFileSync("./serviceAccountKey.json", "utf-8")
-);
+dotenv.config();
 
+let serviceAccount;
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (jsonErr) {
+      // Support base64-encoded JSON string if provided
+      const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, "base64").toString("utf-8");
+      serviceAccount = JSON.parse(decoded);
+    }
+  } else {
+    serviceAccount = JSON.parse(fs.readFileSync("./serviceAccountKey.json", "utf-8"));
+  }
+} catch (err) {
+  // Defer initialization error until first token verification attempt
+  serviceAccount = null;
+}
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+if (serviceAccount) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
 
 export const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -20,6 +36,9 @@ export const verifyToken = async (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
   try {
+    if (!admin.apps?.length && serviceAccount) {
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    }
     const decoded = await admin.auth().verifyIdToken(token);
     req.user = decoded; // contains uid, email
     next();
