@@ -4,6 +4,7 @@ import cors from "cors";
 import multer from "multer";
 import { verifyToken } from "./firebase.js";
 import dotenv from "dotenv";
+import { initWhatsapp, sendWhatsappMessage } from "./whatsappService.js";
 
 dotenv.config();
 
@@ -19,6 +20,9 @@ if (missingEnvVars.length > 0) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Initialize WhatsApp
+initWhatsapp();
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -33,8 +37,8 @@ mongoose.connect(MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
-.then(() => console.log("✅ Connected to MongoDB Atlas"))
-.catch((err) => console.error("❌ Error connecting to MongoDB:", err));
+  .then(() => console.log("✅ Connected to MongoDB Atlas"))
+  .catch((err) => console.error("❌ Error connecting to MongoDB:", err));
 
 // Handle MongoDB connection events
 mongoose.connection.on('error', (err) => {
@@ -47,24 +51,24 @@ mongoose.connection.on('disconnected', () => {
 
 // Mongoose schema
 const reportSchema = new mongoose.Schema({
-    location: String,
-    latitude: Number,
-    longitude: Number,
-    reportType: String,
-    description: String,
-    size: String,
-    accessibility: String,
-    name: String,
-    phone: String,
-    status: {
-        type: String,
-        default: 'Pending'
-    },
-    image: {
-        data: Buffer,         // Store binary image data
-        contentType: String   // Store MIME type like "image/jpeg"
-    }
-}, { timestamps: true });
+  location: String,
+  latitude: Number,
+  longitude: Number,
+  reportType: String,
+  description: String,
+  size: String,
+  accessibility: String,
+  name: String,
+  phone: String,
+  status: {
+    type: String,
+    default: 'Pending'
+  },
+  image: {
+    data: Buffer,         // Store binary image data
+    contentType: String   // Store MIME type like "image/jpeg"
+  }
+}, { timestamps: true, strict:false });
 const Report = mongoose.model("Report", reportSchema);
 
 // Middlewares
@@ -89,14 +93,12 @@ app.get("/health", (req, res) => {
 
 // Root route for deployment verification
 app.get("/", (req, res) => {
-  res.status(200).json({ 
-    message: "Eco-React Backend API is running", 
+  res.status(200).json({
+    message: "Eco-React Backend API is running",
     status: "healthy",
     timestamp: new Date().toISOString()
   });
 });
-
-
 
 // Multer setup (store file in memory to save in MongoDB)
 const storage = multer.memoryStorage();
@@ -105,28 +107,28 @@ const upload = multer({ storage: storage });
 // API route
 app.post("/api/reports", verifyToken, upload.single("image"), async (req, res) => {
   try {
-   
-    
-    const { location, latitude, longitude, reportType, description, size, accessibility, name, phone } = req.body;
 
-    const newReport = new Report({
-      location,
-      latitude,
-      longitude,
-      reportType,
-      description,
-      size,
-      accessibility,
-      name,
-      phone,
-      submittedBy: req.user ? req.user.uid : null,   // track Firebase user
-      image: req.file ? {
-        data: req.file.buffer,
-        contentType: req.file.mimetype
-      } : null
-    });
+    // Take everything from req.body dynamically
+    const reportData = {
+      ...req.body,  // will include location, weight, urgency, quantity, or any new fields sent
+      submittedBy: req.user ? req.user.uid : null,
+      image: req.file
+        ? {
+            data: req.file.buffer,
+            contentType: req.file.mimetype,
+          }
+        : null,
+    };
 
+    // Save directly
+    const newReport = new Report(reportData);
     await newReport.save();
+
+    // After saving the report
+    const messageText = `✅ Your complaint has been successfully registered.\n\n👷 Assigned Worker: John Doe\n⏳ Estimated Resolution Time: 24 hours\n\nThank you for reporting. Our team will keep you updated until the issue is resolved.`;
+
+    await sendWhatsappMessage(reportData.phone, messageText, req.file?.buffer, req.file?.mimetype);
+
     res.json({ success: true, message: "Report saved successfully" });
   } catch (err) {
     console.error("Error saving report:", err);
@@ -134,61 +136,60 @@ app.post("/api/reports", verifyToken, upload.single("image"), async (req, res) =
   }
 });
 
-
 // Get all reports
 app.get('/api/reports', async (req, res) => {
-    try {
-        const reports = await Report.find({});
-        const reportsWithImages = reports.map(report => {
-            if (report.image && report.image.data) {
-                const base64 = report.image.data.toString('base64');
-                return {
-                    ...report.toObject(),
-                    image: `data:${report.image.contentType};base64,${base64}`
-                };
-            }
-            return report.toObject();
-        });
-        res.json(reportsWithImages);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const reports = await Report.find({});
+    const reportsWithImages = reports.map(report => {
+      if (report.image && report.image.data) {
+        const base64 = report.image.data.toString('base64');
+        return {
+          ...report.toObject(),
+          image: `data:${report.image.contentType};base64,${base64}`
+        };
+      }
+      return report.toObject();
+    });
+    res.json(reportsWithImages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 
 // Delete one report (Admin only)
 app.delete("/api/reports/:id", async (req, res) => {
-    const { admin } = req.query;
-    if (admin !== "true") {
-        return res.status(403).json({ message: "Unauthorized" });
-    }
-    try {
-        await Report.findByIdAndDelete(req.params.id);
-        res.json({ message: "Report deleted successfully" });
-    } catch (err) {
-        res.status(500).json({ message: "Error deleting report" });
-    }
+  const { admin } = req.query;
+  if (admin !== "true") {
+    return res.status(403).json({ message: "Unauthorized" });
+  }
+  try {
+    await Report.findByIdAndDelete(req.params.id);
+    res.json({ message: "Report deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting report" });
+  }
 });
 
 // Delete all reports (Admin only)
 app.delete('/api/reports', async (req, res) => {
-    try {
-        const { password } = req.query;
-        if (password !== '12341234') {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
-        await Report.deleteMany({});
-        res.json({ message: 'All reports deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to delete reports' });
+  try {
+    const { password } = req.query;
+    if (password !== '12341234') {
+      return res.status(403).json({ error: 'Unauthorized' });
     }
+    await Report.deleteMany({});
+    res.json({ message: 'All reports deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete reports' });
+  }
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
-  res.status(500).json({ 
-    success: false, 
+  res.status(500).json({
+    success: false,
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
@@ -196,9 +197,9 @@ app.use((err, req, res, next) => {
 
 // 404 handler - catch all unmatched routes
 app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Route not found' 
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
   });
 });
 

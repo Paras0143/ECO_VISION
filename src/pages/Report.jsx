@@ -150,7 +150,7 @@ const Report = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    
+
     // Update estimated fare when relevant fields change
     if (['size', 'accessibility', 'urgency', 'weight', 'materialType', 'quantity'].includes(name)) {
       updateEstimatedFare({ ...formData, [name]: value })
@@ -261,102 +261,102 @@ const Report = () => {
   }
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) {
-    return;
-  }
-  if (!user) {
-    // Save form before redirect
-    localStorage.setItem("reportForm", JSON.stringify(formData));
-    navigate("/signin");
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    // 🔑 get fresh Firebase ID token
-    const idToken = await user.getIdToken();
-
-    const formPayload = new FormData();
-    for (const key in formData) {
-      if (formData[key]) {
-        formPayload.append(key, formData[key]);
-      }
+    if (!validateForm()) {
+      return;
+    }
+    if (!user) {
+      // Save form before redirect
+      localStorage.setItem("reportForm", JSON.stringify(formData));
+      navigate("/signin");
+      return;
     }
 
+    setIsSubmitting(true);
 
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reports` || 'http://localhost:5000/api/reports', {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${idToken}`, // ✅ only this header
-      },
-      body: formPayload,
-    });
+    try {
+      // 🔑 get fresh Firebase ID token
+      const idToken = await user.getIdToken();
 
-    const result = await res.json();
-    console.log(result)
-
-    if (result.success) {
-      setModalContent({
-        type: "success",
-        title: "Report Submitted Successfully!",
-        message:
-          "Your report has been received and will be processed within 24-48 hours.",
-      });
-      setShowModal(true);
-
-      // Reset form
-      setFormData({
-        location: "",
-        latitude: "",
-        longitude: "",
-        reportType: "",
-        description: "",
-        size: "",
-        accessibility: "",
-        name: "",
-        phone: "",
-        image: null,
-        // Reset new fare calculation fields
-        weight: "",
-        urgency: "",
-        materialType: "",
-        quantity: ""
-      });
-      setImagePreview(null);
-      setMarkerPosition(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      const formPayload = new FormData();
+      for (const key in formData) {
+        if (formData[key]) {
+          formPayload.append(key, formData[key]);
+        }
       }
 
-      // Compute fare (frontend only) and redirect to payment
-      try {
-        const fareInput = deriveFareInputFromReport({
-          size: formData.size,
-          accessibility: formData.accessibility,
-          weight: formData.weight,
-          urgency: formData.urgency,
-          materialType: formData.materialType,
-          quantity: formData.quantity
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL!=undefined ?`${import.meta.env.VITE_API_BASE_URL}/api/reports` : 'http://localhost:5000/api/reports', {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`, // ✅ only this header
+        },
+        body: formPayload,
+      });
+
+      const result = await res.json();
+      console.log(result)
+
+      if (result.success) {
+        setModalContent({
+          type: "success",
+          title: "Report Submitted Successfully!",
+          message:
+            "Your report has been received and will be processed within 24-48 hours.",
         });
-        const fare = calcFare(fareInput);
-        sessionStorage.setItem('fare_result', JSON.stringify(fare));
-        navigate('/payment');
-      } catch (e) {
-        console.error('Fare calc error', e);
+        setShowModal(true);
+
+        // Reset form
+        setFormData({
+          location: "",
+          latitude: "",
+          longitude: "",
+          reportType: "",
+          description: "",
+          size: "",
+          accessibility: "",
+          name: "",
+          phone: "",
+          image: null,
+          // Reset new fare calculation fields
+          weight: "",
+          urgency: "",
+          materialType: "",
+          quantity: ""
+        });
+        setImagePreview(null);
+        setMarkerPosition(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+
+        // Compute fare (frontend only) and redirect to payment
+        try {
+          const fareInput = deriveFareInputFromReport({
+            size: formData.size,
+            accessibility: formData.accessibility,
+            weight: formData.weight,
+            urgency: formData.urgency,
+            materialType: formData.materialType,
+            quantity: formData.quantity
+          });
+          const fare = calcFare(fareInput);
+          sessionStorage.setItem('fare_result', JSON.stringify(fare));
+          navigate('/payment');
+        } catch (e) {
+          console.error('Fare calc error', e);
+        }
+
+      } else {
+        showError(result.error || "Failed to submit report.");
       }
-    } else {
-      showError(result.error || "Failed to submit report.");
+    } catch (error) {
+      console.error("Submit error:", error);
+      showError("Failed to submit report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error) {
-    console.error("Submit error:", error);
-    showError("Failed to submit report. Please try again.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
 
   const closeModal = () => {
@@ -552,7 +552,7 @@ const Report = () => {
                 Fare Calculation Details
               </h2>
               <p className="text-gray-600 mb-6 text-base">Provide additional details for accurate fare calculation</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label htmlFor="weight" className="block text-base md:text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
